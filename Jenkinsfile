@@ -1,9 +1,11 @@
 pipeline {
   agent any
-  tools {nodejs "815Node"}
+
   environment {
-    registry = 'dockerhubusername/dockerhubusername'
-    registryCredential = 'dockerhubcredentials'
+    registry = "gmu645/surveyangular"
+		DOCKERHUB_PASS = "soulmate.com"
+		unique_Id = UUID.randomUUID().toString()
+		GOOGLE_APPLICATION_CREDENTIALS    = 'gsa-key.json'
   }
   stages {
     stage('INSTALL PACKAGES') {
@@ -24,22 +26,24 @@ pipeline {
     stage("BUILD DOCKER") {
       steps {
         script {
-          dockerImageBuild = docker.build registry + ":latest"
+          dockerImageBuild = docker.build registry + "${BUILD_ID}"
         }
       }
     }
-     stage("DEPLOY DOCKER") {
+     stage("Push Image to Docker") {
        steps {
           script {
-            docker.withRegistry('', registryCredential) {
-              dockerImageBuild.push()
+           sh 'docker push gmu645/surveyangular:${BUILD_ID}'
+        }
+        
+         
             }
-         }
-      }
    }
     stage("DEPLOY & ACTIVATE") {
       steps {
-        echo 'this part will differ depending on setup'
+        script{
+            sh ' kubectl set image  deployment/swe645final student=gmu645/surveyhw3:${BUILD_ID}'
+        }
       }
     }
   }
